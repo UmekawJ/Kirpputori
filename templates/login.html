@@ -1,0 +1,25 @@
+<html>
+
+<head>
+  <title>Kirjautuminen</title>
+</head>
+
+<body>
+  <h1>Kirjautuminen</h1>
+  <!--判断用户是否已经登陆-->
+  {% if session.username %} 
+  <p>Tervetuloa, {{ session.username }}!</p>
+  <p><a href="/logout">Kirjaudu ulos</a></p>
+  {% else %}
+
+  <form action="/login" method="post">
+    <p>Tunnus: <br /><input type="text" name="username" /></p>
+    <p>Salasana: <br /><input type="password" name="password" /></p>
+    <input type="submit" value="Kirjaudu" />
+    <p><a href = "/">Palaa etusivulle</a></p>
+    <a href="/register">Luo Tunnus</a></p>
+  </form>
+  {% endif %}
+</body>
+
+</html>

@@ -1,0 +1,17 @@
+<html>
+
+<head>
+    <title>Kirpputori</title>
+</head>
+
+<body>
+  <h1>Kirpputori</h1>
+  {% if session.username %}
+    <p>Tervetuloa, {{ session.username }}!</p>
+    <p><a href="/logout">Kirjaudu Ulos</a>
+  {% else %}
+    <p><a href="/login">Kirjaudu Sisään</a> | <a href="/register">Luo Tunnus</a></p>
+  {% endif %}
+</body>
+
+</html>
