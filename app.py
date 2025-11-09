@@ -11,12 +11,32 @@ app.secret_key = config.secret_key
 def index():
     return render_template("index.html")
 
+@app.route("/new_item")
+def new_item():
+    return render_template("new_item.html")
+
+@app.route("/create_item", methods=["POST"])
+def create_item():
+    if "uid" not in session:
+        return redirect("/message/Sinun täytyy kirjautua ensin!")
+    
+    title = request.form["title"]
+    description = request.form["description"]
+    price = request.form["price"]
+    uid = session["uid"]
+
+    sql = """INSERT INTO items (title, description, price, uid)
+             VALUES (?, ?, ?, ?)"""
+    db.execute(sql, [title, description, price, uid])
+
+    return redirect("/")
+
 @app.route("/register")
 def register():
     return render_template("register.html")
 
-@app.route("/create", methods=["POST"])
-def create():
+@app.route("/create_account", methods=["POST"])
+def create_account():
     username = request.form["username"]
     password1 = request.form["password1"]
     password2 = request.form["password2"]
@@ -27,9 +47,11 @@ def create():
     try:
         sql = "INSERT INTO users (username, password_hash) VALUES (?, ?)"
         db.execute(sql, [username, password_hash])
+        id = db.last_insert_id()
     except sqlite3.IntegrityError:
         return redirect("/message/VIRHE: Tunnus on jo varattu!")
     
+    session["uid"] = id
     session["username"] = username
 
     return redirect("/message/Tunnus luotu onnellisesti!")
@@ -47,13 +69,17 @@ def login():
         username = request.form["username"]
         password = request.form["password"]
 
-        sql = "SELECT password_hash FROM users WHERE username = ?"
+        sql = "SELECT id, password_hash FROM users WHERE username = ?"
         result = db.query(sql, [username])
+
         if len(result) == 0:
             return redirect("/message/Tunnusta ei löydy")
-        password_hash = result[0][0]
+        
+        uid = result[0]["id"]
+        password_hash = result[0]["password_hash"]
 
         if check_password_hash(password_hash, password):
+            session["uid"] = uid
             session["username"] = username
             return redirect("/")
         else:
@@ -61,5 +87,6 @@ def login():
 
 @app.route("/logout")
 def logout():
-    del session["username"]
+    session.pop("uid", None)
+    session.pop("username", None)
     return redirect("/")

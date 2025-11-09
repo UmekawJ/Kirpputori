@@ -7,11 +7,12 @@
 <body>
   <h1>Kirpputori</h1>
   {% if session.username %}
-    <p>Tervetuloa, {{ session.username }}!</p>
+    <p>Tervetuloa, {{ session.username }}! UID:{{ session.uid }}</p>
     <p><a href="/logout">Kirjaudu Ulos</a>
   {% else %}
     <p><a href="/login">Kirjaudu Sisään</a> | <a href="/register">Luo Tunnus</a></p>
   {% endif %}
+  <p><a href="/new_item">Uusi ilmoitus</a></p>
 </body>
 
 </html>
