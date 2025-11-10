@@ -1,6 +1,17 @@
 import db
 
 def add_item(title, description, price, uid):
+    sql_check = """SELECT id FROM items WHERE title = ? AND description = ? AND price = ? AND uid = ?"""
+    existing = db.query(sql_check, [title, description, price, uid])
+    if existing:
+        return False
+    
     sql = """INSERT INTO items (title, description, price, uid)
              VALUES (?, ?, ?, ?)"""
     db.execute(sql, [title, description, price, uid])
+    return True
+
+def get_items():
+    sql = """SELECT id, title, description, uid FROM items ORDER BY id DESC"""
+    result = db.query(sql)
+    return result or []

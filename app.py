@@ -10,7 +10,8 @@ app = Flask(__name__)
 app.secret_key = config.secret_key
 @app.route("/")
 def index():
-    return render_template("index.html")
+    all_items = items.get_items()
+    return render_template("index.html", items=all_items)
 
 @app.route("/new_item")
 def new_item():
@@ -27,13 +28,70 @@ def create_item():
     uid = session["uid"]
 
     items.add_item(title, description, price, uid)
+    return redirect("/")
 
-    sql = """INSERT INTO items (title, description, price, uid)
-             VALUES (?, ?, ?, ?)"""
-    db.execute(sql, [title, description, price, uid])
+@app.route("/edit_item/<int:item_id>", methods=["GET"])
+def edit_item(item_id):
+    uid = session.get("uid")
+    if "uid" not in session:
+        return redirect("/message/Sinun täytyy kirjautua ensin!")
+    
+    sql = "SELECT * FROM items WHERE id = ?"
+    result = db.query(sql, [item_id])
+    if not result:
+        return redirect("/message/Ilmoitusta ei löytynyt")
+    
+    item = result[0]
+    if item["uid"] != uid:
+        return redirect("/message/Sinula ei ole oikeutta muokata tätä ilmoitusta!")
+
+    return render_template("edit_item.html", item=item)
+
+@app.route("/update_item/<int:item_id>", methods=["POST"])
+def update_item(item_id):
+    uid = session.get("uid")
+    if "uid" not in session:
+        return redirect("/message/Sinun täytyy kirjautua ensin!")
+    
+    sql = "SELECT * FROM items WHERE id = ?"
+    result = db.query(sql, [item_id])
+    if not result:
+        return redirect("/message/Ilmoitusta ei löytynyt")
+    
+    item = result[0]
+    if item["uid"] != uid:
+        return redirect("/message/Sinula ei ole oikeutta muokata tätä ilmoitusta!")
+
+    title = request.form["title"]
+    description = request.form["description"]
+    price = request.form["price"]
+
+    sql = """UPDATE items SET title = ?, description = ?, price = ? WHERE id = ? AND uid = ?"""
+    db.execute(sql, [title, description, price, item_id, uid])
 
     return redirect("/")
 
+@app.route("/delete_item/<int:item_id>", methods=["GET"])
+def delete_item(item_id):
+    uid = session.get("uid")
+    if "uid" not in session:
+        return redirect("/message/Sinun täytyy kirjautua ensin!")
+    
+    sql = "SELECT * FROM items WHERE id = ?"
+    result = db.query(sql, [item_id])
+    if not result:
+        return redirect("/message/Ilmoitusta ei löytynyt")
+    
+    item = result[0]
+    if item["uid"] != uid:
+        return redirect("/message/Sinula ei ole oikeutta muokata tätä ilmoitusta!")
+    
+    sql_delete = "DELETE FROM items WHERE id = ?"
+    db.execute(sql_delete, [item_id])
+    
+    return redirect("/message/Ilmoitus poistettu")
+
+    
 @app.route("/register")
 def register():
     return render_template("register.html")
@@ -50,11 +108,10 @@ def create_account():
     try:
         sql = "INSERT INTO users (username, password_hash) VALUES (?, ?)"
         db.execute(sql, [username, password_hash])
-        id = db.last_insert_id()
     except sqlite3.IntegrityError:
         return redirect("/message/VIRHE: Tunnus on jo varattu!")
     
-    session["uid"] = id
+    session["uid"] = db.last_insert_id()
     session["username"] = username
 
     return redirect("/message/Tunnus luotu onnellisesti!")
