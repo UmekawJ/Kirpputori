@@ -15,3 +15,19 @@ def get_items():
     sql = """SELECT id, title, description, uid FROM items ORDER BY id DESC"""
     result = db.query(sql)
     return result or []
+
+def permission(item_id, uid, action="view"):
+    sql = "SELECT uid FROM items WHERE id = ?"
+    result = db.query(sql, [item_id])
+    if not result:
+        return False
+    
+    owner_id = result[0]["uid"]
+
+    if action == "view":
+        return True
+
+    if action in ("edit", "delete"):
+        return uid == owner_id
+    
+    return False

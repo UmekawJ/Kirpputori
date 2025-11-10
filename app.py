@@ -30,66 +30,52 @@ def create_item():
     items.add_item(title, description, price, uid)
     return redirect("/")
 
-@app.route("/edit_item/<int:item_id>", methods=["GET"])
+@app.route("/edit_item/<int:item_id>", methods=["GET", "POST"])
 def edit_item(item_id):
     uid = session.get("uid")
-    if "uid" not in session:
+    if not uid:
         return redirect("/message/Sinun täytyy kirjautua ensin!")
     
-    sql = "SELECT * FROM items WHERE id = ?"
-    result = db.query(sql, [item_id])
-    if not result:
-        return redirect("/message/Ilmoitusta ei löytynyt")
-    
-    item = result[0]
-    if item["uid"] != uid:
+    if not items.permission(item_id, uid, "edit"):
         return redirect("/message/Sinula ei ole oikeutta muokata tätä ilmoitusta!")
-
-    return render_template("edit_item.html", item=item)
-
-@app.route("/update_item/<int:item_id>", methods=["POST"])
-def update_item(item_id):
-    uid = session.get("uid")
-    if "uid" not in session:
-        return redirect("/message/Sinun täytyy kirjautua ensin!")
     
-    sql = "SELECT * FROM items WHERE id = ?"
-    result = db.query(sql, [item_id])
-    if not result:
-        return redirect("/message/Ilmoitusta ei löytynyt")
+    if request.method == "GET":
+        sql = "SELECT * FROM items WHERE id = ?"
+        result = db.query(sql, [item_id])
+        if not result:
+            return redirect("/message/Ilmoitusta ei löytynyt")
+        return render_template("edit_item.html", item=result[0])
     
-    item = result[0]
-    if item["uid"] != uid:
-        return redirect("/message/Sinula ei ole oikeutta muokata tätä ilmoitusta!")
+    if request.method == "POST":
+        title = request.form["title"]
+        description = request.form["description"]
+        price = request.form["price"]
+        sql= """UPDATE items SET title = ?, description = ?, price = ? WHERE id = ?"""
+        db.execute(sql, [title, description, price, item_id])
+        return redirect("/message/Ilmoitus päivitetty!")
 
-    title = request.form["title"]
-    description = request.form["description"]
-    price = request.form["price"]
-
-    sql = """UPDATE items SET title = ?, description = ?, price = ? WHERE id = ? AND uid = ?"""
-    db.execute(sql, [title, description, price, item_id, uid])
-
-    return redirect("/")
-
-@app.route("/delete_item/<int:item_id>", methods=["GET"])
+@app.route("/delete_item/<int:item_id>", methods=["POST", "GET"])
 def delete_item(item_id):
     uid = session.get("uid")
-    if "uid" not in session:
+    if not uid:
         return redirect("/message/Sinun täytyy kirjautua ensin!")
     
-    sql = "SELECT * FROM items WHERE id = ?"
-    result = db.query(sql, [item_id])
-    if not result:
+    item = db.query("SELECT * FROM items WHERE id = ?", [item_id])
+    if not item:
         return redirect("/message/Ilmoitusta ei löytynyt")
+    item = item[0]
     
-    item = result[0]
-    if item["uid"] != uid:
-        return redirect("/message/Sinula ei ole oikeutta muokata tätä ilmoitusta!")
+    if not items.permission(item_id, uid, "edit"):
+        return redirect("/message/Sinula ei ole oikeutta poistaa tätä ilmoitusta!")
     
-    sql_delete = "DELETE FROM items WHERE id = ?"
-    db.execute(sql_delete, [item_id])
+    if request.method == "GET":
+        return render_template("delete_item.html", item=item)
     
-    return redirect("/message/Ilmoitus poistettu")
+    if "continue" in request.form:
+        db.execute("DELETE FROM items WHERE id = ?", [item_id])
+        return redirect("/message/Ilmoitus poistettu!")
+    
+    return redirect("/")
 
     
 @app.route("/register")

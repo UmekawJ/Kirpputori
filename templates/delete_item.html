@@ -1,0 +1,17 @@
+<html>
+
+<head>
+    <title>Poista ilmoitus</title>
+</head>
+
+<body>
+    <h1>Poista ilmoitus</h1>
+    <form action="/delete_item/{{ item.id }}" method="post">
+        <p>Haluatko varmasti poistaa ilmoituksen "{{ item.title }}"?</p>
+        <input type="submit" name="continue" value="Jatka" />
+        <input type="submit" name="cancel" value="Peruuta" />
+    </form>
+    <p><a href = "/">Palaa etusivulle</a></p>
+</body>
+
+</html>

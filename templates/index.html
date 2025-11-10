@@ -17,14 +17,11 @@
 
   <ul>
   {% for item in items %}
-  <p>Session UID: {{ session.uid }}</p>
-  <p>Item UID: {{ item.uid }}</p>
-
     <li>
     {{ item.title }}
     {% if session.uid == item.uid %}
       <a href="/edit_item/{{ item.id }}">Muokkaa</a>
-      <a href="/delete_item/{{ item.id }}">Poista</a>
+      <a href="/delete_item/{{ item.id }}" method="post">Poista</a>
     {% endif %}
     </li>
   {% endfor %}
