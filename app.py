@@ -10,8 +10,13 @@ app = Flask(__name__)
 app.secret_key = config.secret_key
 @app.route("/")
 def index():
-    all_items = items.get_items()
-    return render_template("index.html", items=all_items)
+    query = request.args.get("query", "").strip()
+
+    if query:
+        all_items = items.search_items(query)
+    else:
+        all_items = items.get_items()
+    return render_template("index.html", items=all_items, query=query)
 
 @app.route("/new_item")
 def new_item():

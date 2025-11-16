@@ -13,6 +13,12 @@
     <p><a href="/login">Kirjaudu Sisään</a> | <a href="/register">Luo Tunnus</a></p>
   {% endif %}
   <p><a href="/new_item">Uusi ilmoitus</a></p>
+
+  <form action="/" method="get">
+    <input type="text" name="query" placeholder="Hae ilmoituksia" value="{{ query or '' }}">
+    <input type="submit", value="Hae">
+  </form>
+  
   <h2>Ilmoitukset</h2>
 
   <ul>

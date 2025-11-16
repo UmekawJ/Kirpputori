@@ -31,3 +31,10 @@ def permission(item_id, uid, action="view"):
         return uid == owner_id
     
     return False
+
+def search_items(keyword):
+    sql = """SELECT id, title, description, price, uid
+             FROM items
+             WHERE title LIKE ? OR description LIKE ?
+             ORDER BY id DESC"""
+    return db.query(sql, [f"{keyword}%",f"{keyword}%"])
