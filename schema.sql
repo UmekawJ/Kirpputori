@@ -3,10 +3,12 @@ CREATE TABLE IF NOT EXISTS users (
     username TEXT UNIQUE,
     password_hash TEXT
 );
+
 CREATE TABLE IF NOT EXISTS items (
     id INTEGER PRIMARY KEY,
     title TEXT,
     description TEXT,
     price INTEGER,
-    user_id INTEGER REFERENCES users
+    uid INTEGER,
+    FOREIGN KEY (uid) REFERENCES users(id)
 );
