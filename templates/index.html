@@ -9,10 +9,12 @@
   {% if session.username %}
     <p>Tervetuloa, {{ session.username }}! UID:{{ session.uid }}</p>
     <p><a href="/logout">Kirjaudu Ulos</a>
+    <p><a href="/new_item">Uusi ilmoitus</a></p>
+    <p><a href="/user/{{ session.uid }}">Käyttäjäsivu</a></p>
   {% else %}
     <p><a href="/login">Kirjaudu Sisään</a> | <a href="/register">Luo Tunnus</a></p>
   {% endif %}
-  <p><a href="/new_item">Uusi ilmoitus</a></p>
+  
 
   <form action="/" method="get">
     <input type="text" name="query" placeholder="Hae ilmoituksia" value="{{ query or '' }}">
@@ -24,7 +26,7 @@
   <ul>
   {% for item in items %}
     <li>
-    {{ item.title }}
+    <strong>{{ item.title }}</strong> - Hinta: {{ item.price }} €
     {% if session.uid == item.uid %}
       <a href="/edit_item/{{ item.id }}">Muokkaa</a>
       <a href="/delete_item/{{ item.id }}" method="post">Poista</a>

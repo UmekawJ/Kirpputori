@@ -50,11 +50,10 @@ def edit_item(item_id):
             FROM items
             WHERE id = ?
             """
-    result = db.query(sql, [item_id])
-    if not result:
-        return redirect("/message/Ilmoitusta ei löytynyt")
-    return render_template("edit_item.html", item=result[0])
-
+        result = db.query(sql, [item_id])
+        if not result:
+            return redirect("/message/Ilmoitusta ei löytynyt")
+        return render_template("edit_item.html", item=result[0])
     
     if request.method == "POST":
         title = request.form["title"]
@@ -133,7 +132,7 @@ def login():
         result = db.query(sql, [username])
 
         if len(result) == 0:
-            return redirect("/message/Tunnusta ei löydy")
+            return render_template("login.html", error="Tunnusta ei löydy")
         
         uid = result[0]["id"]
         password_hash = result[0]["password_hash"]
@@ -143,8 +142,19 @@ def login():
             session["username"] = username
             return redirect("/")
         else:
-            return redirect("/message/Väärin salasana tai tunnus")
+            return render_template("login.html", error="Väärin salasana tai tunnus")
+        
+@app.route("/user/<int:uid>")   
+def user_page(uid):
+    user = db.query("SELECT id, username FROM users WHERE id = ?", [uid])
+    if not user:
+        return redirect("/message/Käyttäjää ei löydy")
+    user = user[0]
 
+    user_items = db.query("SELECT id, title, description, uid, price FROM items WHERE uid = ?", [uid])
+
+    item_count = len(user_items)
+    return render_template("user_page.html", user=user, items=user_items, item_count=item_count)
 @app.route("/logout")
 def logout():
     session.pop("uid", None)

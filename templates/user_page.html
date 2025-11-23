@@ -1,0 +1,25 @@
+<html>
+
+<body>
+  <h1>Käyttäjä: {{ user.username }}</h1>
+  <p>Lisättyjä ilmoituksia: {{ item_count }}</p>
+
+  <a href="/new_item"> Lisää uusi ilmoitus</a>
+
+  <ul>
+  {% for item in items %}
+      <li>
+        <strong>{{ item.title }}</strong> - Hinta: {{ item.price }} €
+        {% if session.uid == item.uid %}
+          <a href="/edit_item/{{ item.id }}">Muokkaa</a>
+          <a href="/delete_item/{{ item.id }}">Poista</a>
+        {% endif %}
+      </li>
+    {% endfor %}
+  </ul>
+
+  <p><a href="/">Palaa etusivulle</a></p>
+
+</body>
+
+</html>

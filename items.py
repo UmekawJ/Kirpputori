@@ -12,7 +12,7 @@ def add_item(title, description, price, uid):
     return True
 
 def get_items():
-    sql = """SELECT id, title, description, uid FROM items ORDER BY id DESC"""
+    sql = """SELECT id, title, description, price, uid FROM items ORDER BY id DESC"""
     result = db.query(sql)
     return result or []
 
