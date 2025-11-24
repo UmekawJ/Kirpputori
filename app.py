@@ -12,15 +12,37 @@ app.secret_key = config.secret_key
 def index():
     query = request.args.get("query", "").strip()
 
-    if query:
-        all_items = items.search_items(query)
-    else:
-        all_items = items.get_items()
-    return render_template("index.html", items=all_items, query=query)
+    categories_list = db.query("SELECT id, name FROM categories ORDER BY name")
+
+    category_items = {}
+    for cat in categories_list:
+        if query:
+            items_in_cat = db.query("""
+                SELECT items.id, items.title
+                FROM items
+                JOIN item_categories ON items.id = item_categories.item_id
+                WHERE item_categories.category_id = ?
+                  AND (items.title LIKE ? OR items.description LIKE ?)
+                ORDER BY items.id DESC
+            """, [cat["id"], f"%{query}%", f"%{query}%"])
+            
+        else:
+            items_in_cat = db.query("""
+                SELECT items.id, items.title, items.price, items.uid
+                FROM items
+                JOIN item_categories on items.id = item_categories.item_id
+                WHERE item_categories.category_id = ?
+                ORDER BY items.id DESC
+            """, [cat["id"]])
+
+            category_items[cat["name"]] = items_in_cat
+
+    return render_template("index.html", categories=categories_list, category_items=category_items, query=query)
 
 @app.route("/new_item")
 def new_item():
-    return render_template("new_item.html")
+    categories = db.query("SELECT id, name FROM categories")
+    return render_template("new_item.html", categories=categories)
 
 @app.route("/create_item", methods=["POST"])
 def create_item():
@@ -31,8 +53,12 @@ def create_item():
     description = request.form["description"]
     price = request.form["price"]
     uid = session["uid"]
+    category_id = request.form.get("category")
 
     items.add_item(title, description, price, uid)
+    item_id = db.last_insert_id()
+
+    db.execute("INSERT INTO item_categories (item_id, category_id) VALUES (?, ?)", [item_id, category_id])
     return redirect("/")
 
 @app.route("/edit_item/<int:item_id>", methods=["GET", "POST"])
@@ -53,7 +79,13 @@ def edit_item(item_id):
         result = db.query(sql, [item_id])
         if not result:
             return redirect("/message/Ilmoitusta ei löytynyt")
-        return render_template("edit_item.html", item=result[0])
+        item = result[0]
+    
+        categories = db.query("SELECT id, name FROM categories ORDER BY name")
+        selected = db.query("SELECT category_id FROM item_categories WHERE item_id=?", [item_id])
+        selected_ids = [s['category_id'] for s in selected]
+        
+        return render_template("edit_item.html", item=item, categories=categories, selected_ids=selected_ids)
     
     if request.method == "POST":
         title = request.form["title"]
@@ -61,6 +93,11 @@ def edit_item(item_id):
         price = request.form["price"]
         sql= """UPDATE items SET title = ?, description = ?, price = ? WHERE id = ?"""
         db.execute(sql, [title, description, price, item_id])
+
+        db.execute("DELETE FROM item_categories WHERE item_id = ?", [item_id])
+        category_id = request.form.get("category")
+        if category_id:
+            db.execute("INSERT INTO item_categories (item_id, category_id) VALUES(?, ?)", [item_id, category_id])
         return redirect("/message/Ilmoitus päivitetty!")
 
 @app.route("/delete_item/<int:item_id>", methods=["POST", "GET"])
@@ -81,11 +118,12 @@ def delete_item(item_id):
 
     if not items.permission(item_id, uid, "edit"):
         return redirect("/message/Sinula ei ole oikeutta poistaa tätä ilmoitusta!")
-
+    
     if request.method == "GET":
         return render_template("delete_item.html", item=item)
-
+    
     if "continue" in request.form:
+        db.execute("DELETE FROM item_categories WHERE item_id = ?", [item_id])
         db.execute("DELETE FROM items WHERE id = ?", [item_id])
         return redirect("/message/Ilmoitus poistettu!")
 

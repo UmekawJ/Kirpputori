@@ -10,6 +10,13 @@
         <p>Otsikko: <br /><input type="text" name="title" value="{{ item.title }}"/></p>
         <p>Kuvaus: <br /><textarea name="description" rows="10" cols="50">{{ item.description }}</textarea></p>
         <p>Hinta: <br /><input type="text" name="price" value="{{ item.price }}" size="4"/>€</p>
+
+        <label>Valitse luokka:</label><br>
+        {% for cat in categories %}
+            <input type="radio" name="category" value="{{ cat.id }}" required>
+        {{ cat.name }} <br>
+        {% endfor %}
+        
         <input type="submit" value="Tallenna muutokset" />
         <p><a href = "/">Palaa etusivulle</a></p>
     </form>
