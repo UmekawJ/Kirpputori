@@ -26,6 +26,16 @@ CREATE TABLE IF NOT EXISTS item_categories (
     FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS comments (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    item_id INTEGER NOT NULL,
+    uid INTEGER NOT NULL,
+    comment TEXT NOT NULL,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (item_id) REFERENCES items(id) ON DELETE CASCADE,
+    FOREIGN KEY (uid) REFERENCES users(id)
+);
+
 INSERT OR IGNORE INTO categories (name) VALUES ('Huonekalut');
 INSERT OR IGNORE INTO categories (name) VALUES ('Elektroniikka');
 INSERT OR IGNORE INTO categories (name) VALUES ('Vaatteet');

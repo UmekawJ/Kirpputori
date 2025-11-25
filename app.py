@@ -34,8 +34,15 @@ def index():
                 WHERE item_categories.category_id = ?
                 ORDER BY items.id DESC
             """, [cat["id"]])
+        
+        item_list = []
+        for row in items_in_cat:
+            item = dict(row)
+            count = db.query("SELECT COUNT(*) AS c FROM comments WHERE item_id = ?", [item["id"]])
+            item["comment_count"] = count[0]["c"]
+            item_list.append(item)
 
-            category_items[cat["name"]] = items_in_cat
+        category_items[cat["name"]] = item_list
 
     return render_template("index.html", categories=categories_list, category_items=category_items, query=query)
 
@@ -106,14 +113,9 @@ def delete_item(item_id):
     if not uid:
         return redirect("/message/Sinun täytyy kirjautua ensin!")
 
-    item = db.query(
-        "SELECT id, title, description, price, uid FROM items WHERE id = ?",
-        [item_id]
-    )
-
+    item = db.query("SELECT id, title, description, price, uid FROM items WHERE id = ?", [item_id])
     if not item:
         return redirect("/message/Ilmoitusta ei löytynyt")
-
     item = item[0]
 
     if not items.permission(item_id, uid, "edit"):
@@ -122,12 +124,69 @@ def delete_item(item_id):
     if request.method == "GET":
         return render_template("delete_item.html", item=item)
     
-    if "continue" in request.form:
+    if request.method == "POST" and "continue" in request.form:
         db.execute("DELETE FROM item_categories WHERE item_id = ?", [item_id])
+        db.execute("DELETE FROM comments WHERE id = ?", [item_id])
         db.execute("DELETE FROM items WHERE id = ?", [item_id])
         return redirect("/message/Ilmoitus poistettu!")
 
     return redirect("/")
+
+@app.route("/item/<int:item_id>")
+def show_item(item_id):
+    item = db.query("SELECT * FROM items WHERE id = ?", [item_id])
+    if not item:
+        return redirect("/message/Ilmoitusta ei löytynyt")
+    item = item[0]
+
+    comments = db.query(
+    """
+    SELECT comments.id,
+           comments.item_id,
+           comments.uid,
+           comments.comment,
+           comments.created_at,
+           users.username
+    FROM comments
+    JOIN users ON users.id = comments.uid
+    WHERE comments.item_id = ?
+    ORDER BY comments.created_at DESC
+    """,
+    [item_id]
+)
+
+    return render_template("item_page.html", item=item, comments=comments)
+
+@app.route("/item/<int:item_id>/comment", methods=["POST"])
+def add_comment(item_id):
+    uid = session.get("uid")
+    if not uid:
+        return redirect("/login")
+    
+    comment = request.form.get("comment", "").strip()
+    if not comment:
+        return redirect(f"/item&{item_id}")
+    
+    db.execute("INSERT INTO comments (item_id, uid, comment) VALUES (?, ?, ?)", [item_id, uid, comment])
+
+    return redirect(f"/item/{item_id}")
+
+@app.route("/delete_comment/<int:comment_id>", methods=["POST"])
+def delete_comment(comment_id):
+    uid = session.get("uid")
+    if not uid:
+        return redirect("/message/Sinun täytyy kirjautua ensin!")
+    
+    comment = db.query("SELECT id, uid, item_id FROM comments WHERE id = ?", [comment_id])
+    if not comment:
+        return redirect("/message/Kommenttia ei löytynyt")
+    comment = comment[0]
+
+    if comment["uid"] != uid:
+        return redirect("/message/Sinulla ei ole oikeutta poistaa tätä kommenttia!")
+    
+    db.execute("DELETE FROM comments WHERE id = ?", [comment_id])
+    return redirect(f"/item/{comment['item_id']}#comments")
 
 @app.route("/register")
 def register():
@@ -189,10 +248,24 @@ def user_page(uid):
         return redirect("/message/Käyttäjää ei löydy")
     user = user[0]
 
-    user_items = db.query("SELECT id, title, description, uid, price FROM items WHERE uid = ?", [uid])
+    items = db.query("""
+        SELECT 
+            items.id,
+            items.title,
+            items.price,
+            items.uid,
+            (
+                SELECT COUNT(*) 
+                FROM comments 
+                WHERE comments.item_id = items.id
+            ) AS comment_count
+        FROM items
+        WHERE items.uid = ?
+        ORDER BY items.id DESC
+    """, [uid])
 
-    item_count = len(user_items)
-    return render_template("user_page.html", user=user, items=user_items, item_count=item_count)
+    item_count = len(items)
+    return render_template("user_page.html", user=user, items=items, item_count=item_count)
 @app.route("/logout")
 def logout():
     session.pop("uid", None)

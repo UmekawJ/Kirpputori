@@ -29,6 +29,7 @@
         {% for item in category_items[category.name] %}
             <li>
                 <a href="/item/{{ item.id }}">{{ item.title }}</a>— {{ item.price }} €
+                <a href="/item/{{ item.id }}#comments">Kommentit ({{ item.comment_count }})</a>
                 {% if session.uid == item.uid %}
                     <a href="/edit_item/{{ item.id }}">Muokkaa</a>
                     <a href="/delete_item/{{ item.id }}">Poista</a>

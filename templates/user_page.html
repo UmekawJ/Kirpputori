@@ -10,6 +10,7 @@
   {% for item in items %}
       <li>
         <strong>{{ item.title }}</strong> - Hinta: {{ item.price }} €
+        <a href="/item/{{ item.id }}#comments">Kommentit ({{ item.comment_count }})</a>
         {% if session.uid == item.uid %}
           <a href="/edit_item/{{ item.id }}">Muokkaa</a>
           <a href="/delete_item/{{ item.id }}">Poista</a>

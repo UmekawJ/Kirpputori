@@ -1,0 +1,32 @@
+<html>
+
+<body>
+    <h2>{{ item.title }}</h2>
+    <p>{{ item.description }}</p>
+    <p>Hinta: {{ item.price }} €</p>
+
+    <h3>Kommentit</h3>
+    <ul id="comments">
+    {% for c in comments %}
+        <li>
+            <strong>{{ c.username }}:</strong> {{ c.comment }} 
+            <em>({{ c.created_at }})</em>
+            {% if session.uid == c.uid %}
+                <form action="/delete_comment/{{ c.id }}" method="post" style="display:inline;">
+                    <button type="submit">Poista</button>
+                </form>
+            {% endif %}
+        </li>
+    {% endfor %}
+    </ul>
+
+    {% if session.uid %}
+    <form action="/item/{{ item.id }}/comment" method="post">
+        <textarea name="comment" rows="3" required></textarea><br>
+        <button type="submit">Lisää kommentti</button>
+    </form>
+    {% endif %}
+    <p><a href = "/">Palaa etusivulle</a></p>
+</body>
+
+</html>

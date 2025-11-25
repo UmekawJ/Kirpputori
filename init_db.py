@@ -37,6 +37,18 @@ CREATE TABLE IF NOT EXISTS item_categories (
 );
 """)
 
+con.execute("""
+CREATE TABLE IF NOT EXISTS comments (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    item_id INTEGER NOT NULL,
+    uid INTEGER NOT NULL,
+    comment TEXT NOT NULL,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (item_id) REFERENCES items(id) ON DELETE CASCADE,
+    FOREIGN KEY (uid) REFERENCES users(id)
+);
+""")
+
 categories = [
     "Huonekalut",
     "Elektroniikka",
