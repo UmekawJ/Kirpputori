@@ -2,9 +2,12 @@ import sqlite3
 from flask import Flask
 from flask import redirect, render_template, request, session
 from werkzeug.security import generate_password_hash, check_password_hash
+from query import get_item, get_comments_for_item
 import config
 import db
 import items
+import secrets
+from flask import abort
 
 app = Flask(__name__)
 app.secret_key = config.secret_key
@@ -53,6 +56,7 @@ def new_item():
 
 @app.route("/create_item", methods=["POST"])
 def create_item():
+    check_csrf()
     if "uid" not in session:
         return redirect("/message/Sinun täytyy kirjautua ensin!")
     
@@ -95,6 +99,7 @@ def edit_item(item_id):
         return render_template("edit_item.html", item=item, categories=categories, selected_ids=selected_ids)
     
     if request.method == "POST":
+        check_csrf()
         title = request.form["title"]
         description = request.form["description"]
         price = request.form["price"]
@@ -125,6 +130,7 @@ def delete_item(item_id):
         return render_template("delete_item.html", item=item)
     
     if request.method == "POST" and "continue" in request.form:
+        check_csrf()
         db.execute("DELETE FROM item_categories WHERE item_id = ?", [item_id])
         db.execute("DELETE FROM comments WHERE id = ?", [item_id])
         db.execute("DELETE FROM items WHERE id = ?", [item_id])
@@ -134,31 +140,19 @@ def delete_item(item_id):
 
 @app.route("/item/<int:item_id>")
 def show_item(item_id):
-    item = db.query("SELECT * FROM items WHERE id = ?", [item_id])
+    item = get_item(item_id)
+
     if not item:
         return redirect("/message/Ilmoitusta ei löytynyt")
     item = item[0]
 
-    comments = db.query(
-    """
-    SELECT comments.id,
-           comments.item_id,
-           comments.uid,
-           comments.comment,
-           comments.created_at,
-           users.username
-    FROM comments
-    JOIN users ON users.id = comments.uid
-    WHERE comments.item_id = ?
-    ORDER BY comments.created_at DESC
-    """,
-    [item_id]
-)
+    comments = get_comments_for_item(item_id)
 
     return render_template("item_page.html", item=item, comments=comments)
 
 @app.route("/item/<int:item_id>/comment", methods=["POST"])
 def add_comment(item_id):
+    check_csrf()
     uid = session.get("uid")
     if not uid:
         return redirect("/login")
@@ -174,6 +168,7 @@ def add_comment(item_id):
 @app.route("/delete_comment/<int:comment_id>", methods=["POST"])
 def delete_comment(comment_id):
     uid = session.get("uid")
+    check_csrf()
     if not uid:
         return redirect("/message/Sinun täytyy kirjautua ensin!")
     
@@ -271,3 +266,17 @@ def logout():
     session.pop("uid", None)
     session.pop("username", None)
     return redirect("/")
+
+def generate_csrf_token():
+    if "csrf_token" not in session:
+        session["csrf_token"] = secrets.token_hex(16)
+    return session["csrf_token"]
+
+app.jinja_env.globals["csrf_token"] = generate_csrf_token
+
+def check_csrf():
+    token = session.get("csrf_token")
+    form_token = request.form.get("csrf_token")
+
+    if not token or not form_token or token != form_token:
+        abort(403)

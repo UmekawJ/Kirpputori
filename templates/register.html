@@ -7,6 +7,7 @@
 <body>
     <h1>Rekisteröinti</h1>
 <form action="/create_account" method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <p>Tunnus: <br /><input type="text" name="username" required /></p>
     <p>Salasana: <br /><input type="password" name="password1" required /></p>
     <p>Toistaa salasana: <br /><input type="password" name="password2" required /></p>

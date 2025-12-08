@@ -6,7 +6,6 @@
 
 <body>
   <h1>Kirjautuminen</h1>
-  <!--判断用户是否已经登陆-->
   {% if session.username %} 
   <p>Tervetuloa, {{ session.username }}!</p>
   <p><a href="/logout">Kirjaudu ulos</a></p>
@@ -17,6 +16,7 @@
     {% endif %}
     
   <form action="/login" method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <p>Tunnus: <br /><input type="text" name="username" /></p>
     <p>Salasana: <br /><input type="password" name="password" /></p>
     <input type="submit" value="Kirjaudu" />

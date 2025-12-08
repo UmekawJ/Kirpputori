@@ -22,6 +22,7 @@
 
     {% if session.uid %}
     <form action="/item/{{ item.id }}/comment" method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <textarea name="comment" rows="3" required></textarea><br>
         <button type="submit">Lisää kommentti</button>
     </form>

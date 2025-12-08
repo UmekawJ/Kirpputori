@@ -7,6 +7,7 @@
 <body>
     <h1>Poista ilmoitus</h1>
     <form action="/delete_item/{{ item.id }}" method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <p>Haluatko varmasti poistaa ilmoituksen "{{ item.title }}"?</p>
         <input type="submit" name="continue" value="Jatka" />
         <input type="submit" name="cancel" value="Peruuta" />
