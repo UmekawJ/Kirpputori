@@ -79,7 +79,7 @@ def edit_item(item_id):
         return redirect("/message/Sinun täytyy kirjautua ensin!")
     
     if not items.permission(item_id, uid, "edit"):
-        return redirect("/message/Sinula ei ole oikeutta muokata tätä ilmoitusta!")
+        return redirect("/message/Sinulla ei ole oikeutta muokata tätä ilmoitusta!")
     
     if request.method == "GET":
         sql = """
@@ -124,7 +124,7 @@ def delete_item(item_id):
     item = item[0]
 
     if not items.permission(item_id, uid, "edit"):
-        return redirect("/message/Sinula ei ole oikeutta poistaa tätä ilmoitusta!")
+        return redirect("/message/Sinulla ei ole oikeutta poistaa tätä ilmoitusta!")
     
     if request.method == "GET":
         return render_template("delete_item.html", item=item)

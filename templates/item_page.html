@@ -13,6 +13,7 @@
             <em>({{ c.created_at }})</em>
             {% if session.uid == c.uid %}
                 <form action="/delete_comment/{{ c.id }}" method="post" style="display:inline;">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <button type="submit">Poista</button>
                 </form>
             {% endif %}
